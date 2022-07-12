@@ -189,7 +189,7 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
           "modules/cfdd4f678e99415a9c1f11342a3a9887/v1/lambda/data_edu_fetch_demo_data.zip"
         ),
         runtime: lambda.Runtime.PYTHON_3_7,
-        handler: "data_edu_fetch_demo_data.lambda_handler.lambda_handler",
+        handler: "data_edu_fetch_demo_data.lambda_handler",
         functionName: "data-edu-fetch-demo-data",
         memorySize: 256,
         timeout: cdk.Duration.seconds(600),
