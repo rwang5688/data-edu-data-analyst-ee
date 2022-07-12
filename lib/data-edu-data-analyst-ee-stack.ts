@@ -172,6 +172,39 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       roleName: "dataedu-fetch-demo-data-lambda-role",
     });
 
+    // Add policies to Fetch Demo Data Lambda Execution Role
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:ListBucket"],
+        resources: [rawBucket.bucketArn],
+      })
+    );
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+        resources: [rawBucket.bucketArn + "/*"],
+      })
+    );
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ],
+        resources: [
+          "arn:aws:logs:" +
+            cdk.Stack.of(this).region +
+            ":" +
+            cdk.Stack.of(this).account +
+            ":log-group:/aws/lambda/data-edu-fetch-demo-data",
+        ],
+      })
+    );
+
+    // Grant Fetch Demo Data Lambda Execution Role access to S3 Bucket + KMS Key
+    rawBucket.grantReadWrite(fetchDemoDataLambdaRole);
+
     // Import Event Engine Asset Bucket
     const eeBucket = s3.Bucket.fromBucketName(
       this,
@@ -207,36 +240,6 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
           "Lambda function that fetches demo data from source data bucket and \
           copies the data objects to raw data bucket.",
       }
-    );
-
-    // Add policies to LMS S3 Fetch Lambda Execution Role
-    fetchDemoDataLambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:ListBucket"],
-        resources: [rawBucket.bucketArn],
-      })
-    );
-    fetchDemoDataLambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        resources: [rawBucket.bucketArn + "/*"],
-      })
-    );
-    fetchDemoDataLambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-        ],
-        resources: [
-          "arn:aws:logs:" +
-            cdk.Stack.of(this).region +
-            ":" +
-            cdk.Stack.of(this).account +
-            ":log-group:/aws/lambda/data-edu-fetch-demo-data",
-        ],
-      })
     );
   }
 }
