@@ -172,19 +172,12 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       roleName: "dataedu-fetch-demo-data-lambda-role",
     });
 
-    // Add policies to Fetch Demo Data Lambda Execution Role
-    fetchDemoDataLambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:ListBucket"],
-        resources: [rawBucket.bucketArn],
-      })
+    // Add AmazonS3FullAccess in order to acccess ee-assets bucket
+    fetchDemoDataLambdaRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
     );
-    fetchDemoDataLambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        resources: [rawBucket.bucketArn + "/*"],
-      })
-    );
+
+    // Add policies in order to write to CloudWatch logs
     fetchDemoDataLambdaRole.addToPolicy(
       new iam.PolicyStatement({
         actions: [
