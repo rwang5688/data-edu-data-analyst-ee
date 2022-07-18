@@ -177,40 +177,19 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
     );
 
-    // Add policies in order to create CloudWatch log group
+    // Add equivalent of AWSLambdaBasicExecutionRole in order to write CloudWatch logs
     fetchDemoDataLambdaRole.addToPolicy(
       new iam.PolicyStatement({
         actions: [
-          "logs:CreateLogGroup"
-        ],
-        resources: [
-          "arn:aws:logs:" +
-            cdk.Stack.of(this).region +
-            ":" +
-            cdk.Stack.of(this).account +
-            ":*",
-        ],
-      })
-    );
-    // Add policies in order to create and write to CloudWatch log stream 
-    fetchDemoDataLambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: [
+          "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents",
+          "logs:PutLogEvents"
         ],
         resources: [
-          "arn:aws:logs:" +
-            cdk.Stack.of(this).region +
-            ":" +
-            cdk.Stack.of(this).account +
-            ":log-group:/aws/lambda/dataedu-fetch-demo-data",
-        ],
+          "*"
+        ]
       })
-    );
-
-    // Grant Fetch Demo Data Lambda Execution Role access to S3 Bucket + KMS Key
-    rawBucket.grantReadWrite(fetchDemoDataLambdaRole);
+    )
 
     // Import Event Engine Asset Bucket
     const eeBucket = s3.Bucket.fromBucketName(
