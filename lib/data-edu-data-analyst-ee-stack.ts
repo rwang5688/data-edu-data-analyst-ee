@@ -202,7 +202,7 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
     const eeBucket = s3.Bucket.fromBucketName(
       this,
       "dataeduEEBucketName",
-      "ee-assets-prod-9132e5491bd44c56aaaaefc3e91b6aa8-" + cdk.Stack.of(this).region
+      "ee-assets-prod-123456abcdefghijklmnopqrstuvwxyz-" + cdk.Stack.of(this).region
     );
 
     // Create LMS S3 Fetch Lambda Function
@@ -212,11 +212,11 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       {
         code: lambda.Code.fromBucket(
           eeBucket,
-          "modules/cfdd4f678e99415a9c1f11342a3a9887/v1/lambda/data_edu_fetch_demo_data.zip"
+          "modules/cfdd4f678e99415a9c1f11342a3a9887/v1/lambda/dataedu_fetch_demo_data.zip"
         ),
         runtime: lambda.Runtime.PYTHON_3_7,
-        handler: "data_edu_fetch_demo_data.lambda_handler",
-        functionName: "data-edu-fetch-demo-data",
+        handler: "dataedu_fetch_demo_data.lambda_handler",
+        functionName: "dataedu-fetch-demo-data",
         memorySize: 256,
         timeout: cdk.Duration.seconds(600),
         role: fetchDemoDataLambdaRole,
@@ -226,8 +226,8 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
           SIS_DEMO_MOCK_DATA_PREFIX: 'mockdata/sis_demo/',
           LMS_DEMO_MOCK_DATA_PREFIX: 'mockdata/lms_demo/v1/',
           RAW_DATA_BUCKET_NAME: rawBucket.bucketName,
-          SIS_DEMO_RAW_DATA_PREFIX: 'sis_demo/',
-          LMS_DEMO_RAW_DATA_PREFIX: 'lms_demo/'
+          SIS_DEMO_RAW_DATA_PREFIX: 'sisdemo_csv/',
+          LMS_DEMO_RAW_DATA_PREFIX: 'lmsdemo_csv/'
         },
         description:
           "Lambda function that fetches demo data from source data bucket and \
