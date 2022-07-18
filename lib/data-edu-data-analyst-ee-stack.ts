@@ -177,11 +177,25 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
     );
 
-    // Add policies in order to write to CloudWatch logs
+    // Add policies in order to create CloudWatch log group
     fetchDemoDataLambdaRole.addToPolicy(
       new iam.PolicyStatement({
         actions: [
-          "logs:CreateLogGroup",
+          "logs:CreateLogGroup"
+        ],
+        resources: [
+          "arn:aws:logs:" +
+            cdk.Stack.of(this).region +
+            ":" +
+            cdk.Stack.of(this).account +
+            ":*",
+        ],
+      })
+    );
+    // Add policies in order to create and write to CloudWatch log stream 
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ],
@@ -190,7 +204,7 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
             cdk.Stack.of(this).region +
             ":" +
             cdk.Stack.of(this).account +
-            ":log-group:/aws/lambda/data-edu-fetch-demo-data",
+            ":log-group:/aws/lambda/dataedu-fetch-demo-data",
         ],
       })
     );
