@@ -166,13 +166,13 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       })
     );
 
-    // IAM Role for Fetch Demo Data Lambda Execution Role
+    // Create IAM role for dataedu-fetch-demo-data Lambda Function
     const fetchDemoDataLambdaRole = new iam.Role(this, "dataeduFetchDemoDataLambdaRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       roleName: "dataedu-fetch-demo-data-lambda-role",
     });
 
-    // Add AWSLambdaBasicExecutionRole in order to write CloudWatch lo
+    // Add AWSLambdaBasicExecutionRole in order to write CloudWatch logs
     fetchDemoDataLambdaRole.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
     );
