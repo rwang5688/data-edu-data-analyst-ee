@@ -191,7 +191,7 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       })
     )
 
-    // Import Event Engine Asset Bucket
+    // Set Lambda Function source code bucket
     const eeBucket = s3.Bucket.fromBucketName(
       this,
       "dataeduEEBucketName",
@@ -215,12 +215,11 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
         role: fetchDemoDataLambdaRole,
         environment: {
           SOURCE_DATA_BUCKET_NAME_PREFIX: 'ee-assets-prod-',
-          SOURCE_MODULE_VERSION_PREFIX: 'modules/cfdd4f678e99415a9c1f11342a3a9887/v1/',
-          SIS_DEMO_MOCK_DATA_PREFIX: 'mockdata/sis_demo/',
-          LMS_DEMO_MOCK_DATA_PREFIX: 'mockdata/lms_demo/v1/',
+          SIS_DEMO_MOCK_DATA_PREFIX: 'modules/f7ff818991a14cfb80e2617aad4431d1/v1/mockdata/sis_demo_parquet/',
+          LMS_DEMO_MOCK_DATA_PREFIX: 'modules/cfdd4f678e99415a9c1f11342a3a9887/v1/mockdata/lms_demo/v1/',
           RAW_DATA_BUCKET_NAME: rawBucket.bucketName,
-          SIS_DEMO_RAW_DATA_PREFIX: 'sisdemo_csv/',
-          LMS_DEMO_RAW_DATA_PREFIX: 'lmsdemo_csv/'
+          SIS_DEMO_RAW_DATA_PREFIX: 'sisdemo/',
+          LMS_DEMO_RAW_DATA_PREFIX: 'lmsdemo/'
         },
         description:
           "Lambda function that fetches demo data from source data bucket and \
