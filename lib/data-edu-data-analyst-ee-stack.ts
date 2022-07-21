@@ -209,8 +209,8 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
           SIS_DEMO_MOCK_DATA_PREFIX: 'modules/f7ff818991a14cfb80e2617aad4431d1/v1/mockdata/sis_demo_parquet/',
           LMS_DEMO_MOCK_DATA_PREFIX: 'modules/cfdd4f678e99415a9c1f11342a3a9887/v1/mockdata/lms_demo/v1/',
           RAW_DATA_BUCKET_NAME: rawBucket.bucketName,
-          SIS_DEMO_RAW_DATA_PREFIX: 'sisdemo/',
-          LMS_DEMO_RAW_DATA_PREFIX: 'lmsdemo/'
+          SIS_DEMO_RAW_DATA_PREFIX: 'sisdb/sisdemo/',
+          LMS_DEMO_RAW_DATA_PREFIX: 'lmsapi/'
         },
         description:
           "Lambda function that fetches demo data from source data bucket and \
