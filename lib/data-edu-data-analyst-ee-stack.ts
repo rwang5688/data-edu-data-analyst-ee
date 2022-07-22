@@ -3,6 +3,7 @@ import * as kms from "aws-cdk-lib/aws-kms";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as glue from 'aws-cdk-lib/aws-glue';
 import { Construct } from "constructs";
 
 export class DataEduDataAnalystEeStack extends cdk.Stack {
@@ -166,27 +167,77 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       })
     );
 
-    // Create IAM role for dataedu-fetch-demo-data Lambda Function
-    const fetchDemoDataLambdaRole = new iam.Role(this, "dataeduFetchDemoDataLambdaRole", {
-      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-      roleName: "dataedu-fetch-demo-data-lambda-role",
-    });
-
-    // Add AWSLambdaBasicExecutionRole in order to write CloudWatch logs
-    fetchDemoDataLambdaRole.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
-    );
-
-    // Add AmazonS3FullAccess in order to acccess ee-assets bucket
-    fetchDemoDataLambdaRole.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
+    // Set EE Assets bucket
+    const eeBucket = s3.Bucket.fromBucketName(
+      this,
+      "dataeduEEBucket",
+      "ee-assets-prod-" + cdk.Stack.of(this).region
     );
 
     // Set Lambda Function source code bucket
-    const eeBucket = s3.Bucket.fromBucketName(
+    // ... this should eventually be the same as the EE Assets bucket
+    const eeSourceCodeBucket = s3.Bucket.fromBucketName(
       this,
-      "dataeduEEBucketName",
+      "dataeduEESourceCodeBucket",
       "ee-assets-prod-123456abcdefghijklmnopqrstuvwxyz-" + cdk.Stack.of(this).region
+    );
+
+    // Create IAM role for dataedu-fetch-demo-data Lambda Function
+    const fetchDemoDataLambdaRole = new iam.Role(this, "dataeduFetchDemoDataLambdaRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // Add policies in order to read and write to ee-assets and raw buckets
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:List*"],
+        resources: [
+          eeBucket.bucketArn,
+          rawBucket.bucketArn,
+        ],
+      })
+    );
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        resources: [
+          eeBucket.bucketArn + "/*",
+          rawBucket.bucketArn + "/*",
+        ],
+      })
+    );
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject", "s3:DeleteObject"],
+        resources: [rawBucket.bucketArn + "/*"],
+      })
+    );
+
+    // Add policies in order to write CloudWatch logs
+    // https://aws.amazon.com/premiumsupport/knowledge-center/lambda-cloudwatch-log-streams-error/
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["logs:CreateLogGroup"],
+        resources: [
+          "arn:aws:logs:" +
+            cdk.Stack.of(this).region +
+            ":" +
+            cdk.Stack.of(this).account +
+            ":*",
+        ],
+      })
+    );
+    fetchDemoDataLambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["logs:CreateLogStream", "logs:PutLogEvents"],
+        resources: [
+          "arn:aws:logs:" +
+            cdk.Stack.of(this).region +
+            ":" +
+            cdk.Stack.of(this).account +
+            ":log-group:/aws/lambda/dataedu-fetch-demo-data:*",
+        ],
+      })
     );
 
     // Create LMS S3 Fetch Lambda Function
@@ -195,7 +246,7 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       "dataeduFetchDemoDataLambda",
       {
         code: lambda.Code.fromBucket(
-          eeBucket,
+          eeSourceCodeBucket,
           "modules/cfdd4f678e99415a9c1f11342a3a9887/v1/lambda/dataedu_fetch_demo_data.zip"
         ),
         runtime: lambda.Runtime.PYTHON_3_7,
@@ -217,5 +268,63 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
           copies the data objects to raw data bucket.",
       }
     );
+
+    // IAM Role for Fetch Demo Data Lambda Execution Role
+    const glueCrawlerRole = new iam.Role(this, 'dataeduGlueCrawlerRole', {
+      assumedBy: new iam.ServicePrincipal('glue.amazonaws.com'),
+    });
+
+    // Add AmazonS3FullAccess in order to acccess raw data bucket
+    glueCrawlerRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole')
+    );
+    
+    // Add policies in order to read raw bucket
+    glueCrawlerRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:List*"],
+        resources: [rawBucket.bucketArn],
+      })
+    );
+    glueCrawlerRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        resources: [rawBucket.bucketArn + "/*"],
+      })
+    );
+
+    // Set Raw Bucket Path
+    const rawBucketPath = 's3://'+rawBucket.bucketName+'/';
+
+    // sisdemo_crawler: Crawls S3 target path; creates db_raw_sisdemo tables
+    const sisdemoCrawler = new glue.CfnCrawler(this, 'dataeduSisdemoCrawler', {
+      role: glueCrawlerRole.roleArn,
+      targets: {
+        s3Targets: [{
+          path: rawBucketPath+'sisdb/sisdemo/',
+        }],
+      },
+    
+      // the properties below are optional
+      databaseName: 'db_raw_sisdemo',
+      description: 'SIS demo data crawler.',
+      name: 'dataedu-sisdemo-crawler',
+    });
+
+    // lmsdemo_crawler: Crawls S3 target path; creates db_raw_lmsdemo tables
+    const lmsdemoCrawler = new glue.CfnCrawler(this, 'dataedLmsdemoCrawler', {
+      role: glueCrawlerRole.roleArn,
+      targets: {
+        s3Targets: [{
+          path: rawBucketPath+'lmsapi/',
+        }],
+      },
+    
+      // the properties below are optional
+      databaseName: 'db_raw_lmsdemo',
+      description: 'LMS demo data crawler.',
+      name: 'dataedu-lmsdemo-crawler',
+    });    
   }
 }
+
