@@ -185,7 +185,6 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
     // Create IAM role for dataedu-fetch-demo-data Lambda Function
     const fetchDemoDataLambdaRole = new iam.Role(this, "dataeduFetchDemoDataLambdaRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-      roleName: "dataedu-fetch-demo-data-lambda-role",
     });
 
     // Add policies in order to read and write to ee-assets and raw buckets
@@ -273,7 +272,6 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
     // IAM Role for Fetch Demo Data Lambda Execution Role
     const glueCrawlerRole = new iam.Role(this, 'dataeduGlueCrawlerRole', {
       assumedBy: new iam.ServicePrincipal('glue.amazonaws.com'),
-      roleName: 'dataedu-glue-crawler-role-name',
     });
 
     // Add AmazonS3FullAccess in order to acccess raw data bucket
