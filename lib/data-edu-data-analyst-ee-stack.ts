@@ -324,7 +324,7 @@ export class DataEduDataAnalystEeStack extends cdk.Stack {
       databaseName: 'db_raw_lmsdemo',
       description: 'LMS demo data crawler.',
       name: 'dataedu-lmsdemo-crawler',
-    });    
+    });
   }
 }
 
